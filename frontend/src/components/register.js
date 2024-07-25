@@ -21,7 +21,8 @@ export default function Register() {
         email: "",
         phone: "",
         checking: 0,
-        savings: 0
+        savings: 0,
+        investments: 0
     });
 
     const navigate = useNavigate();
@@ -29,7 +30,7 @@ export default function Register() {
     async function onSubmit(e) {
         e.preventDefault(); //Don't do the default reaction of reloading the page
 
-        if (form.firstName === "" || form.lastName === "" || form.email === "" || form.password === "" || form.phone === ""){
+        if (form.firstName === "" || form.lastName === "" || form.email === "" || form.password === "" || form.phone === "" || form.role === ""){
             window.alert(`An error occurred. Please check and ensure all fields are filled.`);
             return;
         }
@@ -50,7 +51,7 @@ export default function Register() {
         });
 
 
-        setForm({firstName: "", lastName: "", password: "", email: "", phone: "",}); //reset the form to add another person
+        setForm({firstName: "", lastName: "", password: "", email: "", phone: "", role: ""}); //reset the form to add another person
 
         
         console.log("Creating a new session!");
@@ -135,6 +136,16 @@ export default function Register() {
                         value={form.password} 
                         onChange={(e) => updateForm({ password: e.target.value})}
                     />
+                </div>
+
+                <div>
+                    <label>Role: </label>
+                    <select name="role" id="roles" onChange={(e) => updateForm({ role: e.target.value})}>
+                        <option value="">--Select--</option>
+                        <option value="customer">Customer</option>
+                        <option value="employee">Employee</option>
+                        <option value="admin">Administrator</option>
+                    </select>
                 </div>
 
                 <div>

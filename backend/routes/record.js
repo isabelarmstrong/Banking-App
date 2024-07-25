@@ -1,4 +1,11 @@
 const express = require("express");
+
+/* 
+    TO DO:
+-Add investments account
+    -be able to withdraw/deposit
+    -be able to transfer to and from account to other accounts
+*/
  
 // recordRoutes is an instance of the express router.
 // We use it to define our routes.
@@ -86,6 +93,7 @@ recordRoutes.route("/userAccounts/add").post(async (req, res) => {
         phone: req.body.phone,
         checking: req.body.checking,
         savings: req.body.savings,
+        investments: req.body.investments,
         };
         const result = await db_connect.collection("userAccounts").insertOne(myobj);
         res.json(result);
