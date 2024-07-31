@@ -27,6 +27,7 @@ export default function Login() {
 
         const responsePerson = await response.json();
 
+
         //check to make sure account exists
         if (responsePerson.length === 0) { 
             window.alert("No account found. Please re-enter information.");
@@ -53,7 +54,14 @@ export default function Login() {
             return;
         }
          
-        navigate("/accountSummary");
+        //check to see account role and navigate to according page
+        if(responsePerson[0].role === 'admin'){
+            navigate("/adminHome");
+        }else if (responsePerson[0].role === 'employee'){
+            //navigate to employee home page
+        }else{
+            navigate("/accountSummary");
+        }
     }
 
     function updateForm(jsonObj) {
