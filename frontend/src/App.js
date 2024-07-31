@@ -5,6 +5,8 @@ import Register from "./components/register.js";
 import Login from "./components/login.js";
 import AccountSummary from "./components/account_summary.js";
 import AccountBalance from "./components/account_balance.js";
+import AdminHome from "./components/adminHome.js";
+import ChangeRoles from "./components/changeRoles.js";
 
 const App = () => {
   return (
@@ -15,6 +17,8 @@ const App = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/accountSummary" element={<AccountSummary />} />
         <Route path="/accountBalance" element={<AccountBalance />} />
+        <Route path="/adminHome" element={<AdminHome />} />
+        <Route path="/changeRoles" element={<ChangeRoles />} />
       </Routes>
     </div>
   );
