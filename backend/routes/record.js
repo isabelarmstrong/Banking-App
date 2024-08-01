@@ -47,6 +47,28 @@ recordRoutes.route("/userAccounts/role/:role").get(async (req, res) => {
     }
 });
 
+//update the role of a user
+recordRoutes.route("/changeRole/:email/:role").put(async (req, res) => {
+    try{
+        console.log("In update role!")
+        let db_connect = dbo.getDb();
+        let email = req.params.email;
+        let role = req.params.role;
+
+        newval = {
+            $set: {
+                role: role,
+            },
+        };
+
+        const result = db_connect.collection("userAccounts").updateOne({email: email}, newval);
+        res.json(result);
+        console.log("Updated user's role!")
+    } catch(err){
+        throw err;
+    }
+});
+
 //Gets a specific user by email and password
 recordRoutes.route("/userAccounts/:email/:password").get(async (req, res) => {
     try{
