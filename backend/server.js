@@ -40,12 +40,33 @@ app.get("/", (req, res) =>{
     res.send("Hello, World!");
 });
 
+// Function to create the initial words document
+const createAccountHistoryDocument = async () => {
+    try {
+        let db_connect = dbo.getDb();
+        const existingDocument = await db_connect.collection("words").findOne({});
+        if (!existingDocument) {
+            const initialWordsDocument = { listOfWords: [] };
+            await db_connect.collection("accountHistory").insertOne(initialWordsDocument);
+            console.log("Account History document created.");
+        } else {
+            console.log("Account History document already exists.");
+        }
+    } catch (err) {
+        console.error("Error creating Account History document:", err);
+    }
+};
+
+
 app.listen(port, () => {
-    dbo.connectToServer(function(err){
+    dbo.connectToServer(async (err) =>{
         if(err){
             console.err(err);
+        }else {
+            await createAccountHistoryDocument();
         }
     });
 
     console.log(`Server is running on port ${port}`);
 });
+
