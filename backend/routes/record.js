@@ -598,6 +598,82 @@ recordRoutes.route("/transfer/:emailAddress").put(async (req, res) => {
     }
 });
 
+/*--------------------------------------End of Leslie's Update--------------------------*/
+
+
+//Transfers money from user to another user.
+recordRoutes.route("/transfer-to-another-account").put(async (req, res) => {
+    try {
+        let db_connect = dbo.getDb();
+        const fromEmail = req.body.fromEmail; // Email of the sender
+        const toEmail = req.body.toEmail; // Email of the receiver
+        const fromAccount = req.body.fromAccount; // Account type of the sender (checking/savings/investments)
+        const toAccount = req.body.toAccount; // Account type of the receiver (checking/savings/investments)
+        const transferAmount = req.body.transferAmount; // Amount to be transferred
+
+        // Validate account types
+        const validAccountTypes = ["savings", "checking", "investments"];
+        if (!validAccountTypes.includes(fromAccount) || !validAccountTypes.includes(toAccount)) {
+            return res.status(400).send("Invalid account type. Valid account types are savings, checking, and investments.");
+        }
+
+        // Validate amount
+        if (typeof transferAmount !== "number" || transferAmount <= 0) {
+            return res.status(400).send("Amount must be a positive number.");
+        }
+
+        // Retrieve the sender's account details
+        const sender = await db_connect.collection("userAccounts").findOne({ email: fromEmail });
+        if (!sender) {
+            return res.status(404).send("Sender account not found.");
+        }
+
+        // Retrieve the receiver's account details
+        const receiver = await db_connect.collection("userAccounts").findOne({ email: toEmail });
+        if (!receiver) {
+            return res.status(404).send("Receiver account not found.");
+        }
+
+        // Check if the sender has sufficient funds
+        let senderBalance = sender[fromAccount] || 0;
+        if (senderBalance < transferAmount) {
+            return res.status(400).send("Insufficient funds for the transfer.");
+        }
+
+        // Calculate new balances for the sender
+        let newSenderBalance = senderBalance - transferAmount;
+
+        // Calculate new balances for the receiver
+        let receiverBalance = receiver[toAccount] || 0;
+        let newReceiverBalance = receiverBalance + transferAmount;
+
+        // Update the sender's account balance
+        await db_connect.collection("userAccounts").updateOne(
+            { email: fromEmail },
+            {
+                $set: {
+                    [fromAccount]: newSenderBalance
+                }
+            }
+        );
+
+        // Update the receiver's account balance
+        await db_connect.collection("userAccounts").updateOne(
+            { email: toEmail },
+            {
+                $set: {
+                    [toAccount]: newReceiverBalance
+                }
+            }
+        );
+
+        res.status(200).send(`Transferred ${transferAmount} from ${fromEmail}'s ${fromAccount} to ${toEmail}'s ${toAccount}.`);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("An error occurred during the transfer.");
+    }
+});
+
 
 
  

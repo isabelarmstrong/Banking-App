@@ -31,7 +31,7 @@ const Record = (props) => {
 );
 };
  
-export default function changeRoles() {
+export default function ChangeRoles() {
  const [records, setRecords] = useState([]);
  
  

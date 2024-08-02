@@ -8,6 +8,8 @@ import AccountBalance from "./components/account_balance.js";
 import AdminHome from "./components/adminHome.js";
 import ChangeRoles from "./components/changeRoles.js";
 import AccountHistory from "./components/account_history.js";
+import EmployeeDashboard from "./components/employee.js";
+import TransferBetweenCustomers from "./components/transfer_funds.js";
 
 
 const App = () => {
@@ -22,6 +24,9 @@ const App = () => {
         <Route path="/adminHome" element={<AdminHome />} />
         <Route path="/changeRoles" element={<ChangeRoles />} />
         <Route path="/account_history" element={<AccountHistory />} />
+        <Route path="/employee" element={<EmployeeDashboard />} />
+        <Route path="/transferFunds" element={<TransferBetweenCustomers />} />
+        
       </Routes>
     </div>
   );
