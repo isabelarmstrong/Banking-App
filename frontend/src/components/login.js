@@ -58,7 +58,7 @@ export default function Login() {
         if(responsePerson[0].role === 'admin'){
             navigate("/adminHome");
         }else if (responsePerson[0].role === 'employee'){
-            //navigate to employee home page
+            navigate("/employee")
         }else{
             navigate("/accountSummary");
         }
