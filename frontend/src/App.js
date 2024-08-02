@@ -7,6 +7,8 @@ import AccountSummary from "./components/account_summary.js";
 import AccountBalance from "./components/account_balance.js";
 import AdminHome from "./components/adminHome.js";
 import ChangeRoles from "./components/changeRoles.js";
+import AccountHistory from "./components/account_history.js";
+
 
 const App = () => {
   return (
@@ -19,6 +21,7 @@ const App = () => {
         <Route path="/accountBalance" element={<AccountBalance />} />
         <Route path="/adminHome" element={<AdminHome />} />
         <Route path="/changeRoles" element={<ChangeRoles />} />
+        <Route path="/account_history" element={<AccountHistory />} />
       </Routes>
     </div>
   );

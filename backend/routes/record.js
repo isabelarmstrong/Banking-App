@@ -529,6 +529,77 @@ recordRoutes.route("/savings/checking/:email").put(async (req, res) => {
     }
 });
 
+/*--------------------------------------Leslie's Update--------------------------*/
+//Transfers money from checking/savings/investments to the other checkings/savings/investments within an account associated
+// with an email address. Does not transfer to other user accounts. Like before, the transfer cannot
+// exceed funds. If the withdrawal is successful return a successful message. Otherwise return a failure messages.
+recordRoutes.route("/transfer/:emailAddress").put(async (req, res) => {
+    try {
+        // Connect to the database
+        let db_connect = dbo.getDb();
+        const fromAccount = req.body.fromAccount;
+        const toAccount = req.body.toAccount;
+        const transferAmount = req.body.transferAmount;
+        const emailAddress = req.params.emailAddress;
+
+        // Validate account types
+        const validAccountTypes = ["savings", "checking", "investments"];
+        if (!validAccountTypes.includes(fromAccount) || !validAccountTypes.includes(toAccount)) {
+            return res.send("Invalid account type. Valid account types are savings and checking.");
+        }
+
+        // Ensure the fromAccount and toAccount are different
+        if (fromAccount === toAccount) {
+            return res.send("fromAccount and toAccount must be different");
+        }
+
+        // Validate amount
+        if (typeof transferAmount !== "number" || transferAmount <= 0) {
+            return res.send("Amount must be a positive integer representing total cents");
+        }
+
+        // Retrieve the current balances
+        const result = await db_connect.collection("records").findOne({ emailAddress: emailAddress });
+        if (!result) {
+            return res.send("Account not found");
+        }
+
+        let fromBalance = result[fromAccount + 'Account'] || 0;
+        let toBalance = result[toAccount + 'Account'] || 0;
+
+        // Check if the transfer is possible
+        if (fromBalance < transferAmount) {
+            return res.send("Insufficient funds for the transfer");
+        }
+
+        // Calculate new balances
+        let newFromBalance = fromBalance - transferAmount;
+        let newToBalance = toBalance + transferAmount;
+
+        // Update the account balances
+        const updateResult = await db_connect.collection("records").updateOne(
+            { emailAddress: emailAddress },
+            {
+                $set: {
+                    [fromAccount + 'Account']: newFromBalance,
+                    [toAccount + 'Account']: newToBalance
+                }
+            }
+        );
+
+        if (updateResult.matchedCount === 0) {
+            return res.send("Account not found");
+        }
+
+        //res.json(result);
+        res.status(200).send(`Transferred ${transferAmount} cents from ${fromAccount} to ${toAccount}. New ${fromAccount} balance: ${newFromBalance} cents. New ${toAccount} balance: ${newToBalance} cents.`);
+    } catch (err) {
+       throw err;
+    }
+});
+
+
+
  
 
  

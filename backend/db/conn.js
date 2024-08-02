@@ -25,7 +25,11 @@ module.exports = {
                 await client.db("admin").command({ ping: 1 });
                 console.log("Pinged your deployment. You successfully connected to MongoDB!");
                 _db = client.db("Banking");
-                console.log("Successfully connected to employees collection");
+                console.log("Successfully connected to Banking collection");
+
+                // Ensure the words collection is created (if it doesn't already exist)
+                await _db.createCollection("acccountHistory");
+                console.log("Account History collection created or already exists.");
             } finally {
                 // Ensures that the client will close when you finish/error
                 //console.log("Closing the client...");
