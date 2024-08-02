@@ -76,16 +76,6 @@ export default function EmployeeDashboard(){
  };
 
 
-    function recordList(){
-      return records.map((record) => {
-          return (
-              <Record 
-                  record={record}
-                  key={record.email}
-              />
-          );
-      });
-  }
 
   async function onSubmit(e) {
     e.preventDefault(); //Don't do the default reaction of reloading the page
@@ -114,40 +104,35 @@ export default function EmployeeDashboard(){
 
   
     return (
-        <div className="container">
-            <h3>Employee Dashboard</h3>
-            <p>Welcome Back, {employeeName.firstName} {employeeName.lastName}</p>
+        <div className="employee-wrapper">
+            <div className="employee-container">
+                <h3>Employee Dashboard</h3>
+                {/* Display the welcome message using the first record */}
+                {records.length > 0 && (
+                    <p className="employee-p">Welcome Back, {records[0].firstName} {records[0].lastName}!</p>
+                )}
+                
+                <form className="employee-form-container">
+                    <div className="employee-form-group">
+                        <label>Customer Email:</label>
+                        <input 
+                        type="text" 
+                        value={email} 
+                        onChange={(e) => setEmail(e.target.value)} 
+                        />
+                    </div>
+                    <button type="button" className="employee-form-button" onClick={handleViewBalance}>View Account Balance</button>
+                </form>
 
-            <table>
-                <thead>
-                    <tr>
-                        <th>First Name</th>
-                        <th>Last Name</th>
-                    </tr>
-                </thead>
-                <tbody>{recordList()}</tbody>
-            </table>
+                {message && <p className="message">{message}</p>}
 
-            <form>
-                <label>Customer Email:</label>
-                <input 
-                    type="text" 
-                    value={email} 
-                    onChange={(e) => setEmail(e.target.value)} 
-                />
-                <button type="button" onClick={handleViewBalance}>View Account Balance</button>
-            </form>
-
-            {message && <p className="message">{message}</p>}
-
-            <div>
-                <a href="/register" className="link-button">Register New User</a>
-            </div>
-            <div>
-                <button className="link-button" onClick={() => navigate("/transferFunds")}>Transfer Funds Between Customers</button>
-            </div>
-            <div>
-                <button className="logout-button" onClick={(e) => onSubmit(e)}>Log Out</button>
+                <div className="employee-button-container">
+                <button onClick={handleViewBalance}>View Account Balance</button>
+                <button onClick={() => navigate("/transferFunds")}>Transfer Funds Between Customers</button>
+                </div>
+                <div>
+                    <button className="logout-button" onClick={(e) => onSubmit(e)}>Log Out</button>
+                </div>
             </div>
         </div>
     );

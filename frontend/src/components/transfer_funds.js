@@ -44,71 +44,68 @@ export default function TransferBetweenCustomers() {
     };
 
     return (
-        <div>
+        <div className="transfer-container">
             <h3>Transfer Money Between Customers</h3>
 
-            <div>
-                <label>From Email:</label>
-                <input
-                    type="email"
-                    value={fromEmail}
-                    onChange={(e) => setFromEmail(e.target.value)}
-                />
-            </div>
+            <form>
+                <div className="transfer-form-group">
+                    <label>From Email:</label>
+                    <input
+                        type="email"
+                        value={fromEmail}
+                        onChange={(e) => setFromEmail(e.target.value)}
+                    />
+                </div>
 
-            <div>
-                <label>To Email:</label>
-                <input
-                    type="email"
-                    value={toEmail}
-                    onChange={(e) => setToEmail(e.target.value)}
-                />
-            </div>
+                <div className="transfer-form-group">
+                    <label>To Email:</label>
+                    <input
+                        type="email"
+                        value={toEmail}
+                        onChange={(e) => setToEmail(e.target.value)}
+                    />
+                </div>
 
-            <div>
-                <label>From Account Type:</label>
-                <select
-                    value={fromAccount}
-                    onChange={(e) => setFromAccount(e.target.value)}
-                >
-                    <option value="checking">Checking</option>
-                    <option value="savings">Savings</option>
-                    <option value="investments">Investments</option>
-                </select>
-            </div>
+                <div className="transfer-form-group">
+                    <label>From Account Type:</label>
+                    <select
+                        value={fromAccount}
+                        onChange={(e) => setFromAccount(e.target.value)}
+                    >
+                        <option value="checking">Checking</option>
+                        <option value="savings">Savings</option>
+                        <option value="investments">Investments</option>
+                    </select>
+                </div>
 
-            <div>
-                <label>To Account Type:</label>
-                <select
-                    value={toAccount}
-                    onChange={(e) => setToAccount(e.target.value)}
-                >
-                    <option value="checking">Checking</option>
-                    <option value="savings">Savings</option>
-                    <option value="investments">Investments</option>
-                </select>
-            </div>
+                <div className="transfer-form-group">
+                    <label>To Account Type:</label>
+                    <select
+                        value={toAccount}
+                        onChange={(e) => setToAccount(e.target.value)}
+                    >
+                        <option value="checking">Checking</option>
+                        <option value="savings">Savings</option>
+                        <option value="investments">Investments</option>
+                    </select>
+                </div>
 
-            <div>
-                <label>Amount to Transfer:</label>
-                <input
-                    type="number"
-                    value={transferAmount}
-                    onChange={(e) => setTransferAmount(e.target.value)}
-                />
-            </div>
+                <div className="transfer-form-group">
+                    <label>Amount to Transfer:</label>
+                    <input
+                        type="number"
+                        value={transferAmount}
+                        onChange={(e) => setTransferAmount(e.target.value)}
+                    />
+                </div>
 
-            <div>
-                <button onClick={handleTransfer}>Transfer</button>
-            </div>
+                <div className="transfer-button-group">
+                    <button type="button" onClick={handleTransfer}>Transfer</button>
+                    <button type="button" onClick={() => navigate("/employee")}>Back to Dashboard</button>
+                </div>
 
-            <div>
-                <p>{message}</p>
-            </div>
-
-            <div>
-                <button onClick={() => navigate("/employee")}>Back to Dashboard</button>
-            </div>
+                {message && <p className="transfer-message">{message}</p>}
+            </form>
         </div>
     );
 }
