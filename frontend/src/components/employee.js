@@ -52,30 +52,6 @@ export default function EmployeeDashboard(){
 
 
 
- const handleViewBalance = async () => {
-    if (email) {
-        try {
-            const response = await fetch(`http://localhost:4000/userAccounts/${email}`);
-            if (response.ok) {
-                const userData = await response.json();
-                if (userData.length > 0) {
-                    // Pass the data to the AccountBalance page or use a context
-                    navigate("/accountBalance", { state: { records: userData } });
-                } else {
-                    setMessage("No account found for the provided email.");
-                }
-            } else {
-                setMessage("Failed to retrieve account information.");
-            }
-        } catch (error) {
-            setMessage("An error occurred while fetching account information.");
-        }
-    } else {
-        setMessage("Please enter a valid email.");
-    }
- };
-
-
 
   async function onSubmit(e) {
     e.preventDefault(); //Don't do the default reaction of reloading the page
@@ -112,23 +88,13 @@ export default function EmployeeDashboard(){
                     <p className="employee-p">Welcome Back, {records[0].firstName} {records[0].lastName}!</p>
                 )}
                 
-                <form className="employee-form-container">
-                    <div className="employee-form-group">
-                        <label>Customer Email:</label>
-                        <input 
-                        type="text" 
-                        value={email} 
-                        onChange={(e) => setEmail(e.target.value)} 
-                        />
-                    </div>
-                    <button type="button" className="employee-form-button" onClick={handleViewBalance}>View Account Balance</button>
-                </form>
 
                 {message && <p className="message">{message}</p>}
 
                 <div className="employee-button-container">
-                <button onClick={handleViewBalance}>View Account Balance</button>
+                <button className="admin-button" type="submit"onClick={() => navigate("/register")}>Register new user</button>
                 <button onClick={() => navigate("/transferFunds")}>Transfer Funds Between Customers</button>
+                <button onClick={() => navigate("/accountLookUp")}>Look Up A Customer</button>
                 </div>
                 <div>
                     <button className="logout-button" onClick={(e) => onSubmit(e)}>Log Out</button>

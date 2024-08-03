@@ -83,12 +83,43 @@ export default function Register() {
         });
     }
 
+    async function handleClick() {
+
+        //grab the curr session's email
+        const sessionResponse = await fetch(`http://localhost:4000/session_get/`, {
+            method: "GET",
+            credentials: 'include'
+        }).catch(error => {
+            window.alert(error);
+            return;
+        });
+    
+        const email = await sessionResponse.json();
+    
+        //find their role
+        const response = await fetch(`http://localhost:4000/userAccounts/${email}`);
+        if (!response.ok) {
+            const message = `An error occurred: ${response.statusText}`;
+            window.alert(message);
+            return;
+        }
+    
+        const responseRecords = await response.json();
+    
+    
+        if (responseRecords[0].role === "admin"){
+            navigate("/adminHome");
+        } else{
+            navigate("/employee");
+        }
+    }
+
     return (
-        <div>
+        <div className="transfer-container">
             <h3>Create Account</h3>
 
-            <form onSubmit={onSubmit}>
-                <div>
+            <form onSubmit={onSubmit} className="login-form-group">
+                <div className="login-item">
                     <label>First Name: </label>
                     <input 
                         type="text" 
@@ -98,7 +129,7 @@ export default function Register() {
                     />
                 </div>
 
-                <div>
+                <div className="login-item">
                     <label>Last Name: </label>
                     <input 
                         type="text" 
@@ -108,7 +139,7 @@ export default function Register() {
                     />
                 </div>
 
-                <div>
+                <div className="login-item">
                     <label>Phone Number: </label>
                     <input 
                         type="text" 
@@ -118,7 +149,7 @@ export default function Register() {
                     />
                 </div>
 
-                <div>
+                <div className="login-item">
                     <label>Email: </label>
                     <input 
                         type="text" 
@@ -128,7 +159,7 @@ export default function Register() {
                     />
                 </div>
 
-                <div>
+                <div className="login-item">
                     <label>Password: </label>
                     <input 
                         type="text" 
@@ -138,7 +169,7 @@ export default function Register() {
                     />
                 </div>
 
-                <div>
+                <div className="transfer-form-group">
                     <label>Role: </label>
                     <select name="role" id="roles" onChange={(e) => updateForm({ role: e.target.value})}>
                         <option value="">--Select--</option>
@@ -148,13 +179,22 @@ export default function Register() {
                     </select>
                 </div>
 
-                <div>
+                <div className="login-item">
                     <input
                         type="submit"
                         value="Create Account"
+                        className="login-button"
                     />
+
+                    
                 </div>
+
+                
             </form>
+
+            <div className="transfer-button-group">
+                    <button type="button" onClick={handleClick}>Back to Dashboard</button>
+                    </div>
         </div>
     );
 }

@@ -10,6 +10,7 @@ import ChangeRoles from "./components/changeRoles.js";
 import AccountHistory from "./components/account_history.js";
 import EmployeeDashboard from "./components/employee.js";
 import TransferBetweenCustomers from "./components/transfer_funds.js";
+import AccountLookUp from "./components/accountLookUp.js";
 
 
 const App = () => {
@@ -26,6 +27,7 @@ const App = () => {
         <Route path="/account_history" element={<AccountHistory />} />
         <Route path="/employee" element={<EmployeeDashboard />} />
         <Route path="/transferFunds" element={<TransferBetweenCustomers />} />
+        <Route path="/accountLookUp" element={<AccountLookUp />} />
         
       </Routes>
     </div>

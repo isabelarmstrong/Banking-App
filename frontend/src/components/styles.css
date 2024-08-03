@@ -41,8 +41,6 @@ input[type="text"] {
 
 
 
-
-
 /*------------------------------------account_balance stuff--------------------------------------*/
 .account-balance-table{
     width: 50%;
@@ -282,3 +280,55 @@ input[type="text"] {
     text-align: center;
 }
 
+/*------------------------------------------------------------Login Stuff*/
+
+
+.login-form-group label {
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.login-form-group input,
+.login-form-group select {
+    padding: 7px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.login-item {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 15px;
+}
+
+.login-item label {
+    padding-right: 10px;
+    
+}
+
+.login-item input {
+    margin-left: auto;
+}
+
+
+
+.login-button {
+    background-color: #8d86c9;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    margin: auto;
+    
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+}
+
+.logout-button:hover {
+    background-color: #9d84b0;
+}
+
+.summary-link {
+    margin-right: 15px;
+}

@@ -71,11 +71,11 @@ export default function Login() {
     }
 
     return (
-        <div>
+        <div className="transfer-container">
             <h3>Log In</h3>
 
-            <form onSubmit={onSubmit}>
-                <div>
+            <form onSubmit={onSubmit} className="login-form-group">
+                <div className="login-item">
                     <label>Email: </label>
                     <input 
                         type="text" 
@@ -85,7 +85,7 @@ export default function Login() {
                     />
                 </div>
 
-                <div>
+                <div className="login-item">
                     <label>Password: </label>
                     <input 
                         type="text" 
@@ -99,6 +99,7 @@ export default function Login() {
                     <input
                         type="submit"
                         value="Log In"
+                        className="login-button"
                     />
                 </div>
             </form>

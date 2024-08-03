@@ -3,15 +3,13 @@ import { useNavigate } from "react-router-dom";
 
 
 export default function Home() {
+    const navigate = useNavigate();
+
     return (
         <div>
-            <h3>Home page</h3>
-            <div>
-                <a href="/login">Log In</a>
-            </div>
-
-            <div>
-                <a href="/register">Register</a>
+            <div className="transfer-container">
+                <h3>Home page</h3>
+                <input className="login-button" type="submit" value="Log In" onClick={() => navigate("/login")} />
             </div>
         </div>
     );

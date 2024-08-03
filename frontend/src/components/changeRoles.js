@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from "react";
+
+import { useNavigate } from "react-router-dom";
  
 const Record = (props) => {
   const [form, setForm] = useState(props.record.role);
@@ -33,7 +35,7 @@ const Record = (props) => {
  
 export default function ChangeRoles() {
  const [records, setRecords] = useState([]);
- 
+ const navigate = useNavigate();
  
  // This method fetches the records from the database.
  useEffect(() => {
@@ -94,17 +96,77 @@ export default function ChangeRoles() {
      );
    });
  }
+
+ async function onLogOut(e) {
+  e.preventDefault();
+
+  // Commented out API call
+  
+  const sessionResponse = await fetch(`http://localhost:4000/session_delete`, {
+      method: "GET",
+      credentials: 'include'
+  }).catch(error => {
+      window.alert(error);
+      return;
+  });
+
+  if (!sessionResponse.ok) {
+      const message = `An error occurred: ${sessionResponse.statusText}`;
+      window.alert(message);
+      return;
+  }
+  
+
+  // Navigate to home page for testing
+  navigate("/");
+}
+
+async function handleClick() {
+
+  //grab the curr session's email
+  const sessionResponse = await fetch(`http://localhost:4000/session_get/`, {
+      method: "GET",
+      credentials: 'include'
+  }).catch(error => {
+      window.alert(error);
+      return;
+  });
+
+  const email = await sessionResponse.json();
+
+  //find their role
+  const response = await fetch(`http://localhost:4000/userAccounts/${email}`);
+  if (!response.ok) {
+      const message = `An error occurred: ${response.statusText}`;
+      window.alert(message);
+      return;
+  }
+
+  const responseRecords = await response.json();
+
+
+  if (responseRecords[0].role === "admin"){
+      navigate("/adminHome");
+  } else{
+      navigate("/employee");
+  }
+}
  
  // This following section will display the table with the records of individuals.
  return (
    <div>
+    <div>
+      <input className="logout-button" type="submit" value="Log Out" onClick={(e) => onLogOut(e)} />
+      <button className="logout-button" type="button" onClick={handleClick}>Back to Dashboard</button>
+    </div>
      <h3>Change account Rights</h3>
-     <table className="table table-striped" style={{ marginTop: 20 }}>
+     <table className="transaction-history-table" style={{ marginTop: 20 }}>
        <thead>
          <tr>
            <th>First name</th>
            <th>Last name</th>
            <th>Position</th>
+           <th></th>
          </tr>
        </thead>
        <tbody>{recordList()}</tbody>
