@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import './styles.css'; // Adjust the path as needed
 
@@ -6,7 +6,7 @@ const Record = (props) => (
     <tr>
         <td>{props.record.checking}</td>
         <td>{props.record.savings}</td>
-        <td>{props.record.investment}</td>
+        <td>{props.record.investments}</td>
     </tr>
 );
 
@@ -15,30 +15,53 @@ export default function AccountSummary() {
     const [form, setForm] = useState({
         account: "",
         dollar: "",
-        cents: "00",
+        cents: "",
         action: "",
         fromAccount: "",
-        toAccount: "", // Add this field for the transfer destination
+        toAccount: "",
     });
 
     const navigate = useNavigate();
 
-    // Mocked data for testing
-    const mockRecords = [
-        { checking: "1500.00", savings: "3000.00", investment: "12000.00" }
-    ];
+    useEffect(() => {
+        async function fetchUserData() {
+            const sessionResponse = await fetch(`http://localhost:4000/session_get/`, {
+                method: "GET",
+                credentials: 'include'
+            }).catch(error => {
+                window.alert(error);
+                return;
+            });
+
+            const email = await sessionResponse.json();
+            const response = await fetch(`http://localhost:4000/userAccounts/${email}`);
+            if (!response.ok) {
+                const message = `An error occurred: ${response.statusText}`;
+                window.alert(message);
+                return;
+            }
+
+            const responseRecords = await response.json();
+            setRecords(responseRecords);
+        }
+
+        fetchUserData();
+    }, []);
 
     function recordList() {
-        return mockRecords.map((record, index) => {
-            return <Record key={index} record={record} />;
+        return records.map((record) => {
+            return (
+                <Record 
+                    record={record}
+                    key={record.email}
+                />
+            );
         });
     }
 
     async function onLogOut(e) {
         e.preventDefault();
 
-        // Commented out API call
-        /*
         const sessionResponse = await fetch(`http://localhost:4000/session_delete`, {
             method: "GET",
             credentials: 'include'
@@ -52,22 +75,25 @@ export default function AccountSummary() {
             window.alert(message);
             return;
         }
-        */
 
-        // Navigate to home page for testing
         navigate("/");
     }
 
     async function onSubmit(e) {
         e.preventDefault();
 
-        if (form.account === "" || form.action === "" || form.dollar === "" || form.cents === "") {
-            window.alert("An error occurred. Please check to make sure all fields are filled.");
-            return;
+        if (form.action === "transfer") {
+            if (form.fromAccount === "" || form.toAccount === "" || form.dollar === "" || form.cents === "") {
+                window.alert("An error occurred. Please check to make sure all fields are filled.");
+                return;
+            }
+        } else {
+            if (form.account === "" || form.action === "" || form.dollar === "" || form.cents === "") {
+                window.alert("An error occurred. Please check to make sure all fields are filled.");
+                return;
+            }
         }
 
-        // Commented out API call
-        /*
         const sessionResponse = await fetch(`http://localhost:4000/session_get/`, {
             method: "GET",
             credentials: 'include'
@@ -78,16 +104,45 @@ export default function AccountSummary() {
 
         const email = await sessionResponse.json();
 
-        const amountInCents = parseInt(form.dollar) * 100 + parseInt(form.cents);
+        //const amountInCents = parseInt(form.dollar) * 100 + parseInt(form.cents);
         const newPerson = { 
-            ...form, 
-            transferAmount: amountInCents 
+            ...form 
+            //transferAmount: amountInCents 
         };
 
-        let url = `http://localhost:4000/${form.account}/${form.action}/${email}`;
+        console.log("Selecting an action");
+        let url = "";
         if (form.action === "transfer") {
-            url = `http://localhost:4000/transfer/${email}`;
+            url = `http://localhost:4000/${form.fromAccount}/${form.toAccount}/${email}`;
+        } else {
+            url = `http://localhost:4000/${form.account}/${form.action}/${email}`;
         }
+        /*
+        let url = `http://localhost:4000/${form.account}/${form.action}/${email}`;
+        console.log("making a transfer");
+        if (form.action === "transfer") {
+            if(form.fromAccount === "checking" && form.toAccount === "savings") {
+                url = `http://localhost:4000/checking/savings/${email}`;
+
+            }else if(form.fromAccount === "checking" && form.toAccount === "investments") {
+                url = `http://localhost:4000/checking/investments/${email}`;
+
+            }else if(form.fromAccount === "savings" && form.toAccount === "checking") {
+                url = `http://localhost:4000/savings/checking/${email}`;
+
+            }else if (form.fromAccount === "savings" && form.toAccount === "investments") {
+                url = `http://localhost:4000/savings/investments/${email}`;
+
+            }else if (form.fromAccount === "investments" && form.toAccount === "checking") {
+                url = `http://localhost:4000/investments/checking/${email}`;
+
+            }else if(form.fromAccount === "investments" && form.toAccount === "savings") {
+                url = `http://localhost:4000/investments/savings/${email}`;
+
+            }
+            console.log("accessing backend transfer route");
+        }
+            */
 
         await fetch(url, {
             method: "PUT",
@@ -100,7 +155,48 @@ export default function AccountSummary() {
             return;
         });
 
-        setForm({ account: "", action: "", dollar: "", cents: "00", toAccount: "" });
+        // Create new transaction object
+            const newTransaction = {
+                emailAddress: email,
+                action: form.action,
+                amount: parseInt(form.dollar) * 100 + parseInt(form.cents), // Convert to cents
+                fromAccount: form.fromAccount,
+                toAccount: form.toAccount,
+                date: new Date().toLocaleDateString(), 
+                time: new Date().toLocaleTimeString()
+            };
+
+            // Make API call to add transaction
+            await fetch(`http://localhost:4000/transactionHistory/add`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(newTransaction),
+            }).catch(error => {
+                window.alert(error);
+                return;
+            });
+
+        // Reset form fields based on action
+        if (form.action === "transfer") {
+            setForm({ 
+                account: "", 
+                action: "", 
+                dollar: "", 
+                cents: "", 
+                fromAccount: "", 
+                toAccount: "" 
+            });
+        } else {
+            setForm({ 
+                account: "", 
+                action: "", 
+                dollar: "", 
+                cents: "", 
+                fromAccount: "", 
+            });
+        }
 
         const response = await fetch(`http://localhost:4000/userAccounts/${email}`);
         if (!response.ok) {
@@ -111,10 +207,6 @@ export default function AccountSummary() {
 
         const responseRecords = await response.json();
         setRecords(responseRecords);
-        */
-
-        // For frontend testing, reset form
-        setForm({ account: "", action: "", dollar: "", cents: "00", toAccount: "" });
     }
 
     function updateForm(jsonObj) {
@@ -141,36 +233,6 @@ export default function AccountSummary() {
             </table>
 
             <form onSubmit={onSubmit}>
-                <h4>Select which account:</h4>
-                <div>
-                    <input
-                        id="accountChecking"
-                        type="radio"
-                        value="checking"
-                        checked={form.account === "checking"}
-                        onChange={(e) => updateForm({ account: e.target.value })}
-                    />
-                    <label htmlFor="accountChecking">Checking</label>
-
-                    <input
-                        id="accountSavings"
-                        type="radio"
-                        value="savings"
-                        checked={form.account === "savings"}
-                        onChange={(e) => updateForm({ account: e.target.value })}
-                    />
-                    <label htmlFor="accountSavings">Savings</label>
-
-                    <input
-                        id="accountInvestment"
-                        type="radio"
-                        value="investment"
-                        checked={form.account === "investment"}
-                        onChange={(e) => updateForm({ account: e.target.value })}
-                    />
-                    <label htmlFor="accountInvestment">Investment</label>
-                </div>
-
                 <h4>Select an action:</h4>
                 <div>
                     <input
@@ -201,6 +263,41 @@ export default function AccountSummary() {
                     <label htmlFor="actionTransfer">Transfer</label>
                 </div>
 
+                {(form.action === "withdraw" || form.action === "deposit") && (
+                    <>
+                        <h4>Select which account:</h4>
+                        <div>
+                            <input
+                                id="accountChecking"
+                                type="radio"
+                                value="checking"
+                                checked={form.account === "checking"}
+                                onChange={(e) => updateForm({ account: e.target.value })}
+                            />
+                            <label htmlFor="accountChecking">Checking</label>
+    
+                            <input
+                                id="accountSavings"
+                                type="radio"
+                                value="savings"
+                                checked={form.account === "savings"}
+                                onChange={(e) => updateForm({ account: e.target.value })}
+                            />
+                            <label htmlFor="accountSavings">Savings</label>
+    
+                            <input
+                                id="accountInvestments"
+                                type="radio"
+                                value="investments"
+                                checked={form.account === "investments"}
+                                onChange={(e) => updateForm({ account: e.target.value })}
+                            />
+                            <label htmlFor="accountInvestments">Investment</label>
+                        </div>
+                    </>
+                )}
+                
+
                 {form.action === "transfer" && (
                     <div>
                         <h4>From Account:</h4>
@@ -224,13 +321,13 @@ export default function AccountSummary() {
                             <label htmlFor="fromAccountSavings">Savings</label>
 
                             <input
-                                id="fromAccountInvestment"
+                                id="fromAccountInvestments"
                                 type="radio"
-                                value="investment"
-                                checked={form.fromAccount === "investment"}
+                                value="investments"
+                                checked={form.fromAccount === "investments"}
                                 onChange={(e) => updateForm({ fromAccount: e.target.value })}
                             />
-                            <label htmlFor="fromAccountInvestment">Investment</label>
+                            <label htmlFor="fromAccountInvestments">Investment</label>
                         </div>
                         
                         <h4>To Account:</h4>
@@ -256,14 +353,14 @@ export default function AccountSummary() {
                             <label htmlFor="toAccountSavings">Savings</label>
 
                             <input
-                                id="toAccountInvestment"
+                                id="toAccountInvestments"
                                 type="radio"
-                                value="investment"
-                                checked={form.toAccount === "investment"}
-                                disabled={form.fromAccount === "investment"}
+                                value="investments"
+                                checked={form.toAccount === "investments"}
+                                disabled={form.fromAccount === "investments"}
                                 onChange={(e) => updateForm({ toAccount: e.target.value })}
                             />
-                            <label htmlFor="toAccountInvestment">Investment</label>
+                            <label htmlFor="toAccountInvestments">Investment</label>
                         </div>
                     </div>
                 )}

@@ -94,6 +94,7 @@ export default function AccountSummary() {
         <div>
             <div>
                     <input
+                        className="logout-button"
                         type="submit"
                         value="Log Out"
                         onClick={(e) => onSubmit(e)}
@@ -112,7 +113,12 @@ export default function AccountSummary() {
                 <tbody>{recordList()}</tbody>
             </table>
 
-            <a href="/accountBalance">View account balances</a>
+            <button className="view-account-balance-button" onClick={() => navigate("/accountBalance")}>
+                    Make a Transaction
+            </button>
+            <button className="make-transaction-button" onClick={() => navigate("/account_history")}>
+                    View Transfer History
+            </button>
         </div>
     );
 }

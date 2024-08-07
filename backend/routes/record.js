@@ -530,6 +530,406 @@ recordRoutes.route("/savings/checking/:email").put(async (req, res) => {
 });
 
 /*--------------------------------------Leslie's Update--------------------------*/
+/*--------------------------------------Leslie's Update--------------------------*/
+// deposit into investments by email
+recordRoutes.route("/investments/deposit/:email").put(async (req, res) => {
+    try{
+        console.log("In update investments!")
+        let db_connect = dbo.getDb();
+        let query = req.params.email;
+        let givendollar = req.body.dollar;
+        let givencents = req.body.cents;
+        let givenval;
+        let oldval;
+        let newval;
+
+        givendollar = givendollar.toString();
+        givencents = givencents.toString();
+
+        givenval = givendollar + givencents;
+
+        givenval = parseInt(givenval);
+        
+        //get the value in checking currently stored
+        let val = await db_connect.collection("userAccounts").find({email: query}).project({investments:1, _id:0}).toArray();
+
+        val = JSON.stringify(val);
+
+        for (let i = 0; i < val.length; i++){
+            newval = parseInt(val.charAt(i));
+
+            if (!isNaN(newval)){
+                if (oldval == undefined){
+                    oldval = val.charAt(i);
+                } else{
+                    oldval += val.charAt(i);
+                }
+            }
+        }
+
+        //create the new amount
+        oldval = parseFloat((parseInt(oldval)/100).toFixed(2));
+        givenval = parseFloat((givenval/100).toFixed(2));
+
+        newval = parseInt((oldval + givenval).toFixed(2).replace(".", ""));
+
+        newval = {
+            $set: {
+                investments: newval,
+            },
+        };
+
+        const result = db_connect.collection("userAccounts").updateOne({email: query}, newval);
+        res.json(result);
+        console.log("Deposited!")
+    } catch(err){
+        throw err;
+    }
+});
+
+//withdraw from investments
+recordRoutes.route("/investments/withdraw/:email").put(async (req, res) => {
+    try{
+        console.log("In update investment(withdraw)!")
+        let db_connect = dbo.getDb();
+        let query = req.params.email;
+        let givendollar = req.body.dollar;
+        let givencents = req.body.cents;
+        let givenval;
+        let oldval;
+        let newval;
+
+        givendollar = givendollar.toString();
+        givencents = givencents.toString();
+
+        givenval = givendollar + givencents;
+
+        givenval = parseInt(givenval);
+
+        //get the value in checking currently stored
+        let val = await db_connect.collection("userAccounts").find({email: query}).project({investments:1, _id:0}).toArray();
+
+        val = JSON.stringify(val);
+
+        for (let i = 0; i < val.length; i++){
+            newval = parseInt(val.charAt(i));
+
+            if (!isNaN(newval)){
+                if (oldval == undefined){
+                    oldval = val.charAt(i);
+                } else{
+                    oldval += val.charAt(i);
+                }
+            }
+        }
+
+        //create the new amount
+        oldval = parseFloat((parseInt(oldval)/100).toFixed(2));
+        givenval = parseFloat((givenval/100).toFixed(2));
+
+        newval = oldval - givenval;
+
+        if (newval >= 0){
+            newval = parseInt((newval).toFixed(2).replace(".", ""));
+
+            newval = {
+                $set: {
+                    investments: newval,
+                },
+            };
+
+            const result = db_connect.collection("userAccounts").updateOne({email: query}, newval);
+            res.json(result);
+            console.log("Sucessfully withdrew amount from savings!");            
+        } else{
+            console.log("Failed to withdraw amount from savings.");
+        }
+
+    } catch(err){
+        throw err;
+    }
+});
+
+//transfer checking -> investments
+recordRoutes.route("/checking/investments/:email").put(async (req, res) => {
+    try {
+        console.log("In checking -> investments!");
+        let db_connect = dbo.getDb();
+        let query = req.params.email;
+        let transferAmount = req.body.investments; // Expect this to be in cents
+
+        // Retrieve current checking and investments values
+        let user = await db_connect.collection("userAccounts").findOne({ email: query });
+
+        if (!user) {
+            return res.status(404).send("User not found");
+        }
+
+        let checkingBalance = user.checking || 0;
+        let investmentsBalance = user.investments || 0;
+
+        // Check that the transfer amount is valid
+        if (typeof transferAmount !== 'number' || transferAmount <= 0) {
+            return res.status(400).send("Invalid transfer amount");
+        }
+
+        if (checkingBalance < transferAmount) {
+            return res.status(400).send("Insufficient funds");
+        }
+
+        // Calculate new balances
+        let newCheckingBalance = checkingBalance - transferAmount;
+        let newInvestmentsBalance = investmentsBalance + transferAmount;
+
+        // Update the balances in the database
+        let result = await db_connect.collection("userAccounts").updateOne(
+            { email: query },
+            {
+                $set: {
+                    checking: newCheckingBalance,
+                    investments: newInvestmentsBalance,
+                },
+            }
+        );
+
+        if (result.matchedCount === 0) {
+            return res.status(404).send("User not found");
+        }
+
+        res.status(200).json({ message: "Successfully transferred amount" });
+        console.log("Successfully transferred amount!");
+        
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("An error occurred");
+    }
+});
+
+
+//transfer savings -> checking
+recordRoutes.route("/savings/investments/:email").put(async (req, res) => {
+    try {
+        console.log("In savings -> investments!");
+
+        let db_connect = dbo.getDb();
+        let email = req.params.email;
+        let transferAmount = req.body.investments; // Expect this to be in cents
+
+        // Retrieve current savings and investments values
+        let user = await db_connect.collection("userAccounts").findOne({ email: email });
+
+        if (!user) {
+            return res.status(404).send("User not found");
+        }
+
+        let savingsBalance = user.savings || 0;
+        let investmentsBalance = user.investments || 0;
+
+        // Validate transfer amount
+        if (typeof transferAmount !== 'number' || transferAmount <= 0) {
+            return res.status(400).send("Invalid transfer amount");
+        }
+
+        if (savingsBalance < transferAmount) {
+            return res.status(400).send("Insufficient funds");
+        }
+
+        // Calculate new balances
+        let newSavingsBalance = savingsBalance - transferAmount;
+        let newInvestmentsBalance = investmentsBalance + transferAmount;
+
+        // Update the balances in the database
+        let result = await db_connect.collection("userAccounts").updateOne(
+            { email: email },
+            {
+                $set: {
+                    savings: newSavingsBalance,
+                    investments: newInvestmentsBalance,
+                },
+            }
+        );
+
+        if (result.matchedCount === 0) {
+            return res.status(404).send("User not found");
+        }
+
+        res.status(200).json({ message: "Successfully transferred amount" });
+        console.log("Successfully transferred amount!");
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("An error occurred");
+    }
+});
+
+
+//transfer investments -> checking
+recordRoutes.route("/investments/checking/:email").put(async (req, res) => {
+    try {
+        console.log("In investments -> checking!");
+
+        let db_connect = dbo.getDb();
+        let email = req.params.email;
+        let transferAmount = req.body.checking; // Amount to transfer from investments to checking (in cents)
+
+        // Retrieve current investments and checking values
+        let user = await db_connect.collection("userAccounts").findOne({ email: email });
+
+        if (!user) {
+            return res.status(404).send("User not found");
+        }
+
+        let investmentsBalance = user.investments || 0;
+        let checkingBalance = user.checking || 0;
+
+        // Validate transfer amount
+        if (typeof transferAmount !== 'number' || transferAmount <= 0) {
+            return res.status(400).send("Invalid transfer amount");
+        }
+
+        if (investmentsBalance < transferAmount) {
+            return res.status(400).send("Insufficient funds in investments");
+        }
+
+        // Calculate new balances
+        let newInvestmentsBalance = investmentsBalance - transferAmount;
+        let newCheckingBalance = checkingBalance + transferAmount;
+
+        // Update the balances in the database
+        let result = await db_connect.collection("userAccounts").updateOne(
+            { email: email },
+            {
+                $set: {
+                    investments: newInvestmentsBalance,
+                    checking: newCheckingBalance,
+                },
+            }
+        );
+
+        if (result.matchedCount === 0) {
+            return res.status(404).send("User not found");
+        }
+
+        res.status(200).json({ message: "Successfully transferred amount" });
+        console.log("Successfully transferred amount!");
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("An error occurred");
+    }
+});
+
+
+//transfer investments -> savings
+recordRoutes.route("/investments/savings/:email").put(async (req, res) => {
+    try {
+        console.log("In investments -> savings!");
+
+        let db_connect = dbo.getDb();
+        let email = req.params.email;
+        let transferAmount = req.body.savings; // Amount to transfer from investments to savings (in cents)
+
+        // Retrieve current investments and savings values
+        let user = await db_connect.collection("userAccounts").findOne({ email: email });
+
+        if (!user) {
+            return res.status(404).send("User not found");
+        }
+
+        let investmentsBalance = user.investments || 0;
+        let savingsBalance = user.savings || 0;
+
+        // Validate transfer amount
+        if (typeof transferAmount !== 'number' || transferAmount <= 0) {
+            return res.status(400).send("Invalid transfer amount");
+        }
+
+        if (investmentsBalance < transferAmount) {
+            return res.status(400).send("Insufficient funds in investments");
+        }
+
+        // Calculate new balances
+        let newInvestmentsBalance = investmentsBalance - transferAmount;
+        let newSavingsBalance = savingsBalance + transferAmount;
+
+        // Update the balances in the database
+        let result = await db_connect.collection("userAccounts").updateOne(
+            { email: email },
+            {
+                $set: {
+                    investments: newInvestmentsBalance,
+                    savings: newSavingsBalance,
+                },
+            }
+        );
+
+        if (result.matchedCount === 0) {
+            return res.status(404).send("User not found");
+        }
+
+        res.status(200).json({ message: "Successfully transferred amount" });
+        console.log("Successfully transferred amount!");
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("An error occurred");
+    }
+});
+
+/*
+recordRoutes.put('/:fromAccount/:toAccount/:email').put(async (req, res) => {
+    try {
+        const { fromAccount, toAccount, email } = req.params;
+        const amountInCents = req.body.amount; // Amount in cents
+
+        if (!fromAccount || !toAccount || !email || !amountInCents) {
+            return res.status(400).json({ error: 'Missing required parameters.' });
+        }
+
+        let db_connect = dbo.getDb();
+
+        // Get current balances
+        const user = await db_connect.collection('userAccounts').findOne({ email });
+        if (!user) {
+            return res.status(404).json({ error: 'User not found.' });
+        }
+
+        let fromAccountBalance = user[fromAccount];
+        let toAccountBalance = user[toAccount];
+
+        if (fromAccount === toAccount) {
+            return res.status(400).json({ error: 'From and To accounts cannot be the same.' });
+        }
+
+        if (fromAccountBalance < amountInCents) {
+            return res.status(400).json({ error: 'Insufficient funds.' });
+        }
+
+        // Update balances
+        const updatedFromAccountBalance = fromAccountBalance - amountInCents;
+        const updatedToAccountBalance = toAccountBalance + amountInCents;
+
+        // Update the database
+        const result = await db_connect.collection('userAccounts').updateOne(
+            { email },
+            {
+                $set: {
+                    [`${fromAccount}`]: updatedFromAccountBalance,
+                    [`${toAccount}`]: updatedToAccountBalance
+                }
+            }
+        );
+
+        res.json({ success: true, result });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Internal server error.' });
+    }
+});
+
+*/
+
+
 //Transfers money from checking/savings/investments to the other checkings/savings/investments within an account associated
 // with an email address. Does not transfer to other user accounts. Like before, the transfer cannot
 // exceed funds. If the withdrawal is successful return a successful message. Otherwise return a failure messages.
@@ -595,6 +995,84 @@ recordRoutes.route("/transfer/:emailAddress").put(async (req, res) => {
         res.status(200).send(`Transferred ${transferAmount} cents from ${fromAccount} to ${toAccount}. New ${fromAccount} balance: ${newFromBalance} cents. New ${toAccount} balance: ${newToBalance} cents.`);
     } catch (err) {
        throw err;
+    }
+});
+
+//create the transaction history record //add
+recordRoutes.route("/transactionHistory/add").post(async (req, res) => {
+    try {
+        console.log("Adding a new transaction to the history!!");
+        let db_connect = dbo.getDb();
+
+        // Build the transaction object
+        let newTransaction = {
+            action: req.body.action,
+            amount: req.body.amount,
+            fromAccount: req.body.fromAccount,
+            date: new Date().toLocaleDateString(), 
+            time: new Date().toLocaleTimeString(),
+        };
+
+        if (req.body.action === "transfer") {
+            newTransaction.toAccount = req.body.toAccount;
+        }
+
+        // Update the user's document by pushing the new transaction to the transactions array
+        const result = await db_connect.collection("accountHistory").updateOne(
+            { emailAddress: req.body.emailAddress },
+            { $push: { transactions: newTransaction } },
+            { upsert: true } // Create the document if it doesn't exist
+        );
+
+        res.json(result);
+    } catch (err) {
+        console.error("Error adding transaction history:", err);
+        res.status(500).json({ error: "An error occurred while adding transaction history" });
+    }
+});
+
+
+//retrieving a specific user's transaction history
+recordRoutes.route("/transactionHistory/:emailAddress").get(async (req, res) => {
+    try {
+        let db_connect = dbo.getDb();
+        const userHistory = await db_connect.collection("accountHistory").findOne({ emailAddress: req.params.emailAddress });
+        
+        if (userHistory) {
+            // Sort the transactions array by date and time in descending order
+            userHistory.transactions.sort((a, b) => {
+                let dateA = new Date(`${a.date} ${a.time}`);
+                let dateB = new Date(`${b.date} ${b.time}`);
+                return dateB - dateA; // Sort in descending order
+            });
+            res.json(userHistory);
+        } else {
+            res.status(404).json({ error: "User not found" });
+        }
+    } catch (err) {
+        console.error("Error retrieving transaction history:", err);
+        res.status(500).json({ error: "An error occurred while retrieving transaction history" });
+    }
+});
+
+
+//clear the record(for testing purposes)
+recordRoutes.route("/transactionHistory/clear").post(async (req, res) => {
+    try {
+        let db_connect = dbo.getDb();
+        const result = await db_connect.collection("accountHistory").updateOne(
+            { emailAddress: req.body.emailAddress },
+            { $set: { transactions: [] } }
+        );
+
+        if (result.matchedCount === 0) {
+            res.status(404).json({ error: "User not found" });
+        } else {
+            res.json({ message: "Transaction history cleared" });
+        }
+    } catch (err) {
+        console.error("Error clearing transaction history:", err);
+        res.status(500).json({ error: "An error occurred while clearing transaction history" });
     }
 });
 

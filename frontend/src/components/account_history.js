@@ -1,37 +1,58 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import './styles.css'; 
 import { useNavigate } from "react-router-dom";
 
 // One react component for the entire table (Records)
-const Record = (props) => (
+const Record = ({ record }) => (
     <tr>
-        <td>{props.record.date}</td>
-        <td>{props.record.time}</td>
-        <td>{props.record.amount}</td>
-        <td>{props.record.fromAccount}</td>
-        <td>{props.record.toAccount}</td>
+        <td>{record.date}</td>
+        <td>{record.time}</td>
+        <td>{record.amount}</td>
+        <td>{record.action === "transfer" ? record.fromAccount : "-"}</td>
+        <td>{record.action === "transfer" ? record.toAccount : "-"}</td>
     </tr>
 );
 
 export default function AccountHistory() {
-    const [records, setRecords] = useState([
-        // Sample data for testing
-        { date: "2024-07-30", time: "12:00 PM", amount: "$100.00", fromAccount: "checkings", toAccount: "savings" },
-        { date: "2024-07-29", time: "1:00 PM", amount: "$50.00", fromAccount: "investments", toAccount: "checkings" },
-        { date: "2024-07-28", time: "2:00 PM", amount: "$200.00", fromAccount: "savings", toAccount: "investments" }
-    ]);
-
+    const [records, setRecords] = useState([]);
     const navigate = useNavigate();
 
+    useEffect(() => {
+        async function fetchHistory() {
+            try {
+                const sessionResponse = await fetch(`http://localhost:4000/session_get/`, {
+                    method: "GET",
+                    credentials: 'include'
+                });
+
+                if (!sessionResponse.ok) {
+                    throw new Error("Failed to get session");
+                }
+
+                const email = await sessionResponse.json();
+                const response = await fetch(`http://localhost:4000/transactionHistory/${email}`);
+                
+                if (!response.ok) {
+                    throw new Error("Failed to fetch transaction history");
+                }
+
+                const historyData = await response.json();
+                setRecords(historyData.transactions);
+            } catch (error) {
+                window.alert(error);
+            }
+        }
+
+        fetchHistory();
+    }, []);
+
     function recordList() {
-        return records.map((record, index) => {
-            return (
-                <Record 
-                    record={record}
-                    key={index}
-                />
-            );
-        });
+        return records.map((record, index) => (
+            <Record 
+                record={record}
+                key={index}
+            />
+        ));
     }
 
     return (
@@ -43,14 +64,14 @@ export default function AccountHistory() {
                 />
             </div>
             <h3 className="transaction-history-title">Transfer History</h3>
-            <table className="transaction-history-table" style={{marginTop: 20}}>
+            <table className="transaction-history-table" style={{ marginTop: 20 }}>
                 <thead>
                     <tr>
-                        <th style={{width: "20%"}}>Date</th>
-                        <th style={{width: "20%"}}>Time</th>
-                        <th style={{width: "20%"}}>Amount</th>
-                        <th style={{width: "20%"}}>From</th>
-                        <th style={{width: "20%"}}>To</th>
+                        <th style={{ width: "20%" }}>Date</th>
+                        <th style={{ width: "20%" }}>Time</th>
+                        <th style={{ width: "20%" }}>Amount</th>
+                        <th style={{ width: "20%" }}>From</th>
+                        <th style={{ width: "20%" }}>To</th>
                     </tr>
                 </thead>
                 <tbody>{recordList()}</tbody>
