@@ -1,4 +1,5 @@
 const express = require("express");
+const encrypt = require('crypto');
 
 /* 
     TO DO:
@@ -75,7 +76,7 @@ recordRoutes.route("/userAccounts/:email/:password").get(async (req, res) => {
         console.log("in get account route");
         let db_connect = dbo.getDb();
         let email = req.params.email;
-        let pass = req.params.password;
+        let pass = encrypt.createHash('sha256').update(req.params.password).digest('hex');
 
         const result = await db_connect.collection("userAccounts").find({email: email, password: pass}).project({_id: 0, password: 0}).toArray();
         console.log(result);
@@ -106,11 +107,14 @@ recordRoutes.route("/userAccounts/add").post(async (req, res) => {
         console.log("Adding a new account!!")
         let db_connect = dbo.getDb();
         db_connect.collection("userAccounts").createIndex( { email: 1 }, { unique: true } ) //make it so that email is unique
+
+        password = encrypt.createHash('sha256').update(req.body.password).digest('hex');
+
         let myobj = {
         firstName: req.body.firstName,
         lastName: req.body.lastName,
         role: req.body.role,
-        password: req.body.password,
+        password: password,
         email: req.body.email,
         phone: req.body.phone,
         checking: req.body.checking,
@@ -827,7 +831,7 @@ recordRoutes.route("/investments/savings/:email").put(async (req, res) => {
 
         let db_connect = dbo.getDb();
         let email = req.params.email;
-        let transferAmount = req.body.savings; // Amount to transfer from investments to savings (in cents)
+        let transferAmount = parseInt(req.body.transferAmount); // Amount to transfer from investments to savings (in cents)
 
         // Retrieve current investments and savings values
         let user = await db_connect.collection("userAccounts").findOne({ email: email });
