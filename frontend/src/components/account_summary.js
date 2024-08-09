@@ -113,10 +113,10 @@ export default function AccountSummary() {
                 <tbody>{recordList()}</tbody>
             </table>
 
-            <button className="view-account-balance-button" onClick={() => navigate("/accountBalance")}>
+            <button className="make-transaction-button" onClick={() => navigate("/accountBalance")}>
                     Make a Transaction
             </button>
-            <button className="make-transaction-button" onClick={() => navigate("/account_history")}>
+            <button className="view-history-button" onClick={() => navigate("/account_history")}>
                     View Transfer History
             </button>
         </div>

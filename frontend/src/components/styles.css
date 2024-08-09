@@ -8,7 +8,6 @@ h3 {
 
 body{
     background-color: #cccada;
-    
 }
 
 form {
@@ -74,6 +73,20 @@ input[type="text"] {
 }
 
 /*------------------------------------account_history stuff------------------------------------------*/
+.view-history-button{
+    background-color: #8d86c9;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    margin-left: 5px;
+    cursor: pointer;
+}
+
+.view-history-button:hover {
+    background-color: #9d84b0;
+}
+
 .transaction-history-table {
     width: 100%;
     border-collapse: collapse;
@@ -87,17 +100,31 @@ input[type="text"] {
     background-color: #f2f2f2;
 }
 
-
-.view-account-balance-button {
+/*------------------------------------account_summary stuff------------------------------------------*/
+.make-transaction-button{
     background-color: #8d86c9;
     color: white;
     padding: 10px 20px;
     border: none;
     border-radius: 5px;
+    margin-left: 5px;
     cursor: pointer;
 }
+.make-transaction-button:hover {
+    background-color: #9d84b0;
+}
 
-.view-account-balance-button:hover {
+.make-transaction-button-th{
+    background-color: #8d86c9;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    margin: 10px;
+    float: right;
+    cursor: pointer;
+}
+.make-transaction-button-th:hover {
     background-color: #9d84b0;
 }
 

@@ -13,7 +13,7 @@ const Record = (props) => (
 export default function AccountSummary() {
     const [records, setRecords] = useState([]);
     const [form, setForm] = useState({
-        account: "",
+        //account: "",
         dollar: "",
         cents: "",
         action: "",
@@ -82,13 +82,16 @@ export default function AccountSummary() {
     async function onSubmit(e) {
         e.preventDefault();
 
+        console.log("fromAccount: " + form.fromAccount);
+        console.log("toAccount: " + form.toAccount);
+
         if (form.action === "transfer") {
             if (form.fromAccount === "" || form.toAccount === "" || form.dollar === "" || form.cents === "") {
                 window.alert("An error occurred. Please check to make sure all fields are filled.");
                 return;
             }
         } else {
-            if (form.account === "" || form.action === "" || form.dollar === "" || form.cents === "") {
+            if (form.fromAccount === "" || form.action === "" || form.dollar === "" || form.cents === "") {
                 window.alert("An error occurred. Please check to make sure all fields are filled.");
                 return;
             }
@@ -110,39 +113,15 @@ export default function AccountSummary() {
             //transferAmount: amountInCents 
         };
 
+        
         console.log("Selecting an action");
         let url = "";
         if (form.action === "transfer") {
             url = `http://localhost:4000/${form.fromAccount}/${form.toAccount}/${email}`;
         } else {
-            url = `http://localhost:4000/${form.account}/${form.action}/${email}`;
+            url = `http://localhost:4000/${form.fromAccount}/${form.action}/${email}`;
         }
-        /*
-        let url = `http://localhost:4000/${form.account}/${form.action}/${email}`;
-        console.log("making a transfer");
-        if (form.action === "transfer") {
-            if(form.fromAccount === "checking" && form.toAccount === "savings") {
-                url = `http://localhost:4000/checking/savings/${email}`;
-
-            }else if(form.fromAccount === "checking" && form.toAccount === "investments") {
-                url = `http://localhost:4000/checking/investments/${email}`;
-
-            }else if(form.fromAccount === "savings" && form.toAccount === "checking") {
-                url = `http://localhost:4000/savings/checking/${email}`;
-
-            }else if (form.fromAccount === "savings" && form.toAccount === "investments") {
-                url = `http://localhost:4000/savings/investments/${email}`;
-
-            }else if (form.fromAccount === "investments" && form.toAccount === "checking") {
-                url = `http://localhost:4000/investments/checking/${email}`;
-
-            }else if(form.fromAccount === "investments" && form.toAccount === "savings") {
-                url = `http://localhost:4000/investments/savings/${email}`;
-
-            }
-            console.log("accessing backend transfer route");
-        }
-            */
+        console.log("URL is: " + url);
 
         await fetch(url, {
             method: "PUT",
@@ -181,7 +160,7 @@ export default function AccountSummary() {
         // Reset form fields based on action
         if (form.action === "transfer") {
             setForm({ 
-                account: "", 
+                //account: "", 
                 action: "", 
                 dollar: "", 
                 cents: "", 
@@ -190,7 +169,7 @@ export default function AccountSummary() {
             });
         } else {
             setForm({ 
-                account: "", 
+                //account: "", 
                 action: "", 
                 dollar: "", 
                 cents: "", 
@@ -271,8 +250,8 @@ export default function AccountSummary() {
                                 id="accountChecking"
                                 type="radio"
                                 value="checking"
-                                checked={form.account === "checking"}
-                                onChange={(e) => updateForm({ account: e.target.value })}
+                                checked={form.fromAccount === "checking"}
+                                onChange={(e) => updateForm({ fromAccount: e.target.value })}
                             />
                             <label htmlFor="accountChecking">Checking</label>
     
@@ -280,8 +259,8 @@ export default function AccountSummary() {
                                 id="accountSavings"
                                 type="radio"
                                 value="savings"
-                                checked={form.account === "savings"}
-                                onChange={(e) => updateForm({ account: e.target.value })}
+                                checked={form.fromAccount === "savings"}
+                                onChange={(e) => updateForm({ fromAccount: e.target.value })}
                             />
                             <label htmlFor="accountSavings">Savings</label>
     
@@ -289,8 +268,8 @@ export default function AccountSummary() {
                                 id="accountInvestments"
                                 type="radio"
                                 value="investments"
-                                checked={form.account === "investments"}
-                                onChange={(e) => updateForm({ account: e.target.value })}
+                                checked={form.fromAccount === "investments"}
+                                onChange={(e) => updateForm({ fromAccount: e.target.value })}
                             />
                             <label htmlFor="accountInvestments">Investment</label>
                         </div>
@@ -384,6 +363,8 @@ export default function AccountSummary() {
 
                 <div>
                     <input className="commit-transfer-button" type="submit" value="Commit" />
+                    <button className="make-transaction-button" onClick={() => navigate("/account_history")}>
+                        Transaction History</button>
                 </div>
             </form>
         </div>

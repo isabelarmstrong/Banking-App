@@ -8,10 +8,12 @@ const Record = ({ record }) => (
         <td>{record.date}</td>
         <td>{record.time}</td>
         <td>{record.amount}</td>
-        <td>{record.action === "transfer" ? record.fromAccount : "-"}</td>
+        <td>{record.action}</td>
+        <td>{record.fromAccount}</td>
         <td>{record.action === "transfer" ? record.toAccount : "-"}</td>
     </tr>
 );
+
 
 export default function AccountHistory() {
     const [records, setRecords] = useState([]);
@@ -55,33 +57,65 @@ export default function AccountHistory() {
         ));
     }
 
+    
+async function onSubmit(e) {
+    e.preventDefault(); //Don't do the default reaction of reloading the page
+    
+
+    const sessionResponse = await fetch(`http://localhost:4000/session_delete`,
+        {
+            method: "GET",
+            credentials: 'include'
+        }
+    ).catch(error => {
+        window.alert(error);
+        return;
+    });
+
+    console.log("Checking response!");
+
+    if (!sessionResponse.ok){
+        const message = `An error occurred: ${sessionResponse.statusText}`;
+        window.alert(message);
+        return;
+    }
+     
+    navigate("/");
+    
+}
+
     return (
         <div>
             <div>
-                <input className="logout-button"
+                <input
+                    className="logout-button"
                     type="submit"
                     value="Log Out"
+                    onClick={(e) => onSubmit(e)}
                 />
+                <button className="make-transaction-button-th" onClick={() => navigate("/accountBalance")}>
+                    View account balances
+                </button>
             </div>
             <h3 className="transaction-history-title">Transfer History</h3>
+
+            <div>
+                
+            </div>
+
             <table className="transaction-history-table" style={{ marginTop: 20 }}>
                 <thead>
                     <tr>
-                        <th style={{ width: "20%" }}>Date</th>
-                        <th style={{ width: "20%" }}>Time</th>
-                        <th style={{ width: "20%" }}>Amount</th>
-                        <th style={{ width: "20%" }}>From</th>
-                        <th style={{ width: "20%" }}>To</th>
+                        <th style={{ width: "10%" }}>Date</th>
+                        <th style={{ width: "10%" }}>Time</th>
+                        <th style={{ width: "10%" }}>Amount</th>
+                        <th style={{ width: "10%" }}>Action</th>
+                        <th style={{ width: "10%" }}>From</th>
+                        <th style={{ width: "10%" }}>To</th>
                     </tr>
                 </thead>
                 <tbody>{recordList()}</tbody>
             </table>
-
-            <div>
-                <button className="view-account-balance-button" onClick={() => navigate("/accountBalance")}>
-                    View account balances
-                </button>
-            </div>
         </div>
     );
 }

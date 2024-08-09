@@ -534,7 +534,6 @@ recordRoutes.route("/savings/checking/:email").put(async (req, res) => {
 });
 
 /*--------------------------------------Leslie's Update--------------------------*/
-/*--------------------------------------Leslie's Update--------------------------*/
 // deposit into investments by email
 recordRoutes.route("/investments/deposit/:email").put(async (req, res) => {
     try{
@@ -657,112 +656,127 @@ recordRoutes.route("/investments/withdraw/:email").put(async (req, res) => {
 //transfer checking -> investments
 recordRoutes.route("/checking/investments/:email").put(async (req, res) => {
     try {
-        console.log("In checking -> investments!");
+        console.log("In transfer checking -> investments!");
         let db_connect = dbo.getDb();
-        let query = req.params.email;
-        let transferAmount = req.body.investments; // Expect this to be in cents
+        let email = req.params.email;
+        let dollarAmount = req.body.dollar;
+        let centAmount = req.body.cents;
+        let transferAmount;
 
-        // Retrieve current checking and investments values
-        let user = await db_connect.collection("userAccounts").findOne({ email: query });
-
-        if (!user) {
-            return res.status(404).send("User not found");
+        if (isNaN(dollarAmount) || isNaN(centAmount)) {
+            return res.status(400).json({ message: "Invalid dollar or cents value" });
         }
 
-        let checkingBalance = user.checking || 0;
-        let investmentsBalance = user.investments || 0;
+        dollarAmount = dollarAmount.toString();
+        centAmount = centAmount.toString();
 
-        // Check that the transfer amount is valid
-        if (typeof transferAmount !== 'number' || transferAmount <= 0) {
-            return res.status(400).send("Invalid transfer amount");
+        transferAmount = dollarAmount + centAmount;
+
+        transferAmount = parseInt(transferAmount);
+
+        // Fetch current checking and savings values
+        let userAccount = await db_connect.collection("userAccounts").findOne({ email: email });
+
+        if (!userAccount) {
+            return res.status(404).json({ message: "User not found" });
         }
 
-        if (checkingBalance < transferAmount) {
-            return res.status(400).send("Insufficient funds");
-        }
+        let checkingBalance = userAccount.checking;
+        let investmentsBalance = userAccount.investments;
 
-        // Calculate new balances
-        let newCheckingBalance = checkingBalance - transferAmount;
-        let newInvestmentsBalance = investmentsBalance + transferAmount;
+        // Check if the amount to transfer is valid
+        if (checkingBalance >= transferAmount) {
+            let newCheckingBalance = checkingBalance - transferAmount;
+            let newInvestmentsBalance = investmentsBalance + transferAmount;
 
-        // Update the balances in the database
-        let result = await db_connect.collection("userAccounts").updateOne(
-            { email: query },
-            {
-                $set: {
-                    checking: newCheckingBalance,
-                    investments: newInvestmentsBalance,
-                },
+            // Update values in the database
+            let result = await db_connect.collection("userAccounts").updateOne(
+                { email: email },
+                {
+                    $set: {
+                        checking: newCheckingBalance,
+                        investments: newInvestmentsBalance
+                    }
+                }
+            );
+
+            if (result.modifiedCount > 0) {
+                res.json({ message: "Successfully transferred amount!" });
+                console.log("Successfully transferred amount!");
+            } else {
+                res.status(500).json({ message: "Failed to update account" });
             }
-        );
-
-        if (result.matchedCount === 0) {
-            return res.status(404).send("User not found");
+        } else {
+            res.status(400).json({ message: "Insufficient funds" });
+            console.log("Failed to transfer amount: Insufficient funds.");
         }
-
-        res.status(200).json({ message: "Successfully transferred amount" });
-        console.log("Successfully transferred amount!");
-        
     } catch (err) {
         console.error(err);
-        res.status(500).send("An error occurred");
+        res.status(500).json({ message: "Internal server error" });
     }
 });
 
 
-//transfer savings -> checking
+//transfer savings -> investments
 recordRoutes.route("/savings/investments/:email").put(async (req, res) => {
     try {
-        console.log("In savings -> investments!");
-
+        console.log("In transfer savings -> investments!");
         let db_connect = dbo.getDb();
         let email = req.params.email;
-        let transferAmount = req.body.investments; // Expect this to be in cents
+        let dollarAmount = req.body.dollar;
+        let centAmount = req.body.cents;
+        let transferAmount;
 
-        // Retrieve current savings and investments values
-        let user = await db_connect.collection("userAccounts").findOne({ email: email });
-
-        if (!user) {
-            return res.status(404).send("User not found");
+        if (isNaN(dollarAmount) || isNaN(centAmount)) {
+            return res.status(400).json({ message: "Invalid dollar or cents value" });
         }
 
-        let savingsBalance = user.savings || 0;
-        let investmentsBalance = user.investments || 0;
+        dollarAmount = dollarAmount.toString();
+        centAmount = centAmount.toString();
 
-        // Validate transfer amount
-        if (typeof transferAmount !== 'number' || transferAmount <= 0) {
-            return res.status(400).send("Invalid transfer amount");
+        transferAmount = dollarAmount + centAmount;
+
+        transferAmount = parseInt(transferAmount);
+
+        // Fetch current checking and savings values
+        let userAccount = await db_connect.collection("userAccounts").findOne({ email: email });
+
+        if (!userAccount) {
+            return res.status(404).json({ message: "User not found" });
         }
 
-        if (savingsBalance < transferAmount) {
-            return res.status(400).send("Insufficient funds");
-        }
+        let investmentsBalance = userAccount.investments;
+        let savingsBalance = userAccount.savings;
 
-        // Calculate new balances
-        let newSavingsBalance = savingsBalance - transferAmount;
-        let newInvestmentsBalance = investmentsBalance + transferAmount;
+        // Check if the amount to transfer is valid
+        if (savingsBalance >= transferAmount) {
+            let newSavingsBalance = savingsBalance - transferAmount;
+            let newInvestmentsBalance = investmentsBalance + transferAmount;
 
-        // Update the balances in the database
-        let result = await db_connect.collection("userAccounts").updateOne(
-            { email: email },
-            {
-                $set: {
-                    savings: newSavingsBalance,
-                    investments: newInvestmentsBalance,
-                },
+            // Update values in the database
+            let result = await db_connect.collection("userAccounts").updateOne(
+                { email: email },
+                {
+                    $set: {
+                        investments: newInvestmentsBalance,
+                        savings: newSavingsBalance
+                    }
+                }
+            );
+
+            if (result.modifiedCount > 0) {
+                res.json({ message: "Successfully transferred amount!" });
+                console.log("Successfully transferred amount!");
+            } else {
+                res.status(500).json({ message: "Failed to update account" });
             }
-        );
-
-        if (result.matchedCount === 0) {
-            return res.status(404).send("User not found");
+        } else {
+            res.status(400).json({ message: "Insufficient funds" });
+            console.log("Failed to transfer amount: Insufficient funds.");
         }
-
-        res.status(200).json({ message: "Successfully transferred amount" });
-        console.log("Successfully transferred amount!");
-
     } catch (err) {
         console.error(err);
-        res.status(500).send("An error occurred");
+        res.status(500).json({ message: "Internal server error" });
     }
 });
 
@@ -770,56 +784,63 @@ recordRoutes.route("/savings/investments/:email").put(async (req, res) => {
 //transfer investments -> checking
 recordRoutes.route("/investments/checking/:email").put(async (req, res) => {
     try {
-        console.log("In investments -> checking!");
-
+        console.log("In transfer investments -> checking!");
         let db_connect = dbo.getDb();
         let email = req.params.email;
-        let transferAmount = req.body.checking; // Amount to transfer from investments to checking (in cents)
+        let dollarAmount = req.body.dollar;
+        let centAmount = req.body.cents;
+        let transferAmount;
 
-        // Retrieve current investments and checking values
-        let user = await db_connect.collection("userAccounts").findOne({ email: email });
-
-        if (!user) {
-            return res.status(404).send("User not found");
+        if (isNaN(dollarAmount) || isNaN(centAmount)) {
+            return res.status(400).json({ message: "Invalid dollar or cents value" });
         }
 
-        let investmentsBalance = user.investments || 0;
-        let checkingBalance = user.checking || 0;
+        dollarAmount = dollarAmount.toString();
+        centAmount = centAmount.toString();
 
-        // Validate transfer amount
-        if (typeof transferAmount !== 'number' || transferAmount <= 0) {
-            return res.status(400).send("Invalid transfer amount");
+        transferAmount = dollarAmount + centAmount;
+
+        transferAmount = parseInt(transferAmount);
+
+        // Fetch current checking and savings values
+        let userAccount = await db_connect.collection("userAccounts").findOne({ email: email });
+
+        if (!userAccount) {
+            return res.status(404).json({ message: "User not found" });
         }
 
-        if (investmentsBalance < transferAmount) {
-            return res.status(400).send("Insufficient funds in investments");
-        }
+        let checkingBalance = userAccount.checking;
+        let investmentsBalance = userAccount.investments;
 
-        // Calculate new balances
-        let newInvestmentsBalance = investmentsBalance - transferAmount;
-        let newCheckingBalance = checkingBalance + transferAmount;
+        // Check if the amount to transfer is valid
+        if (investmentsBalance >= transferAmount) {
+            let newInvestmentsBalance = investmentsBalance - transferAmount;
+            let newCheckingBalance = checkingBalance + transferAmount;
 
-        // Update the balances in the database
-        let result = await db_connect.collection("userAccounts").updateOne(
-            { email: email },
-            {
-                $set: {
-                    investments: newInvestmentsBalance,
-                    checking: newCheckingBalance,
-                },
+            // Update values in the database
+            let result = await db_connect.collection("userAccounts").updateOne(
+                { email: email },
+                {
+                    $set: {
+                        checking: newCheckingBalance,
+                        investments: newInvestmentsBalance
+                    }
+                }
+            );
+
+            if (result.modifiedCount > 0) {
+                res.json({ message: "Successfully transferred amount!" });
+                console.log("Successfully transferred amount!");
+            } else {
+                res.status(500).json({ message: "Failed to update account" });
             }
-        );
-
-        if (result.matchedCount === 0) {
-            return res.status(404).send("User not found");
+        } else {
+            res.status(400).json({ message: "Insufficient funds" });
+            console.log("Failed to transfer amount: Insufficient funds.");
         }
-
-        res.status(200).json({ message: "Successfully transferred amount" });
-        console.log("Successfully transferred amount!");
-
     } catch (err) {
         console.error(err);
-        res.status(500).send("An error occurred");
+        res.status(500).json({ message: "Internal server error" });
     }
 });
 
@@ -827,180 +848,66 @@ recordRoutes.route("/investments/checking/:email").put(async (req, res) => {
 //transfer investments -> savings
 recordRoutes.route("/investments/savings/:email").put(async (req, res) => {
     try {
-        console.log("In investments -> savings!");
-
+        console.log("In transfer investments -> savings!");
         let db_connect = dbo.getDb();
         let email = req.params.email;
-        let transferAmount = parseInt(req.body.transferAmount); // Amount to transfer from investments to savings (in cents)
+        let dollarAmount = req.body.dollar;
+        let centAmount = req.body.cents;
+        let transferAmount;
 
-        // Retrieve current investments and savings values
-        let user = await db_connect.collection("userAccounts").findOne({ email: email });
-
-        if (!user) {
-            return res.status(404).send("User not found");
+        if (isNaN(dollarAmount) || isNaN(centAmount)) {
+            return res.status(400).json({ message: "Invalid dollar or cents value" });
         }
 
-        let investmentsBalance = user.investments || 0;
-        let savingsBalance = user.savings || 0;
+        dollarAmount = dollarAmount.toString();
+        centAmount = centAmount.toString();
 
-        // Validate transfer amount
-        if (typeof transferAmount !== 'number' || transferAmount <= 0) {
-            return res.status(400).send("Invalid transfer amount");
+        transferAmount = dollarAmount + centAmount;
+
+        transferAmount = parseInt(transferAmount);
+
+        // Fetch current checking and savings values
+        let userAccount = await db_connect.collection("userAccounts").findOne({ email: email });
+
+        if (!userAccount) {
+            return res.status(404).json({ message: "User not found" });
         }
 
-        if (investmentsBalance < transferAmount) {
-            return res.status(400).send("Insufficient funds in investments");
-        }
+        let savingsBalance = userAccount.savings;
+        let investmentsBalance = userAccount.investments;
 
-        // Calculate new balances
-        let newInvestmentsBalance = investmentsBalance - transferAmount;
-        let newSavingsBalance = savingsBalance + transferAmount;
+        // Check if the amount to transfer is valid
+        if (investmentsBalance >= transferAmount) {
+            let newInvestmentsBalance = investmentsBalance - transferAmount;
+            let newSavingsBalance = savingsBalance + transferAmount;
 
-        // Update the balances in the database
-        let result = await db_connect.collection("userAccounts").updateOne(
-            { email: email },
-            {
-                $set: {
-                    investments: newInvestmentsBalance,
-                    savings: newSavingsBalance,
-                },
+            // Update values in the database
+            let result = await db_connect.collection("userAccounts").updateOne(
+                { email: email },
+                {
+                    $set: {
+                        savings: newSavingsBalance,
+                        investments: newInvestmentsBalance
+                    }
+                }
+            );
+
+            if (result.modifiedCount > 0) {
+                res.json({ message: "Successfully transferred amount!" });
+                console.log("Successfully transferred amount!");
+            } else {
+                res.status(500).json({ message: "Failed to update account" });
             }
-        );
-
-        if (result.matchedCount === 0) {
-            return res.status(404).send("User not found");
+        } else {
+            res.status(400).json({ message: "Insufficient funds" });
+            console.log("Failed to transfer amount: Insufficient funds.");
         }
-
-        res.status(200).json({ message: "Successfully transferred amount" });
-        console.log("Successfully transferred amount!");
-
     } catch (err) {
         console.error(err);
-        res.status(500).send("An error occurred");
+        res.status(500).json({ message: "Internal server error" });
     }
 });
 
-/*
-recordRoutes.put('/:fromAccount/:toAccount/:email').put(async (req, res) => {
-    try {
-        const { fromAccount, toAccount, email } = req.params;
-        const amountInCents = req.body.amount; // Amount in cents
-
-        if (!fromAccount || !toAccount || !email || !amountInCents) {
-            return res.status(400).json({ error: 'Missing required parameters.' });
-        }
-
-        let db_connect = dbo.getDb();
-
-        // Get current balances
-        const user = await db_connect.collection('userAccounts').findOne({ email });
-        if (!user) {
-            return res.status(404).json({ error: 'User not found.' });
-        }
-
-        let fromAccountBalance = user[fromAccount];
-        let toAccountBalance = user[toAccount];
-
-        if (fromAccount === toAccount) {
-            return res.status(400).json({ error: 'From and To accounts cannot be the same.' });
-        }
-
-        if (fromAccountBalance < amountInCents) {
-            return res.status(400).json({ error: 'Insufficient funds.' });
-        }
-
-        // Update balances
-        const updatedFromAccountBalance = fromAccountBalance - amountInCents;
-        const updatedToAccountBalance = toAccountBalance + amountInCents;
-
-        // Update the database
-        const result = await db_connect.collection('userAccounts').updateOne(
-            { email },
-            {
-                $set: {
-                    [`${fromAccount}`]: updatedFromAccountBalance,
-                    [`${toAccount}`]: updatedToAccountBalance
-                }
-            }
-        );
-
-        res.json({ success: true, result });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Internal server error.' });
-    }
-});
-
-*/
-
-
-//Transfers money from checking/savings/investments to the other checkings/savings/investments within an account associated
-// with an email address. Does not transfer to other user accounts. Like before, the transfer cannot
-// exceed funds. If the withdrawal is successful return a successful message. Otherwise return a failure messages.
-recordRoutes.route("/transfer/:emailAddress").put(async (req, res) => {
-    try {
-        // Connect to the database
-        let db_connect = dbo.getDb();
-        const fromAccount = req.body.fromAccount;
-        const toAccount = req.body.toAccount;
-        const transferAmount = req.body.transferAmount;
-        const emailAddress = req.params.emailAddress;
-
-        // Validate account types
-        const validAccountTypes = ["savings", "checking", "investments"];
-        if (!validAccountTypes.includes(fromAccount) || !validAccountTypes.includes(toAccount)) {
-            return res.send("Invalid account type. Valid account types are savings and checking.");
-        }
-
-        // Ensure the fromAccount and toAccount are different
-        if (fromAccount === toAccount) {
-            return res.send("fromAccount and toAccount must be different");
-        }
-
-        // Validate amount
-        if (typeof transferAmount !== "number" || transferAmount <= 0) {
-            return res.send("Amount must be a positive integer representing total cents");
-        }
-
-        // Retrieve the current balances
-        const result = await db_connect.collection("records").findOne({ emailAddress: emailAddress });
-        if (!result) {
-            return res.send("Account not found");
-        }
-
-        let fromBalance = result[fromAccount + 'Account'] || 0;
-        let toBalance = result[toAccount + 'Account'] || 0;
-
-        // Check if the transfer is possible
-        if (fromBalance < transferAmount) {
-            return res.send("Insufficient funds for the transfer");
-        }
-
-        // Calculate new balances
-        let newFromBalance = fromBalance - transferAmount;
-        let newToBalance = toBalance + transferAmount;
-
-        // Update the account balances
-        const updateResult = await db_connect.collection("records").updateOne(
-            { emailAddress: emailAddress },
-            {
-                $set: {
-                    [fromAccount + 'Account']: newFromBalance,
-                    [toAccount + 'Account']: newToBalance
-                }
-            }
-        );
-
-        if (updateResult.matchedCount === 0) {
-            return res.send("Account not found");
-        }
-
-        //res.json(result);
-        res.status(200).send(`Transferred ${transferAmount} cents from ${fromAccount} to ${toAccount}. New ${fromAccount} balance: ${newFromBalance} cents. New ${toAccount} balance: ${newToBalance} cents.`);
-    } catch (err) {
-       throw err;
-    }
-});
 
 //create the transaction history record //add
 recordRoutes.route("/transactionHistory/add").post(async (req, res) => {
@@ -1013,13 +920,10 @@ recordRoutes.route("/transactionHistory/add").post(async (req, res) => {
             action: req.body.action,
             amount: req.body.amount,
             fromAccount: req.body.fromAccount,
+            toAccount: req.body.toAccount,
             date: new Date().toLocaleDateString(), 
             time: new Date().toLocaleTimeString(),
         };
-
-        if (req.body.action === "transfer") {
-            newTransaction.toAccount = req.body.toAccount;
-        }
 
         // Update the user's document by pushing the new transaction to the transactions array
         const result = await db_connect.collection("accountHistory").updateOne(
@@ -1079,6 +983,7 @@ recordRoutes.route("/transactionHistory/clear").post(async (req, res) => {
         res.status(500).json({ error: "An error occurred while clearing transaction history" });
     }
 });
+
 
 /*--------------------------------------End of Leslie's Update--------------------------*/
 
