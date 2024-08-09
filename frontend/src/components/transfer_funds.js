@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 export default function TransferBetweenCustomers() {
@@ -8,7 +8,32 @@ export default function TransferBetweenCustomers() {
     const [toAccount, setToAccount] = useState("checking");
     const [transferAmount, setTransferAmount] = useState("");
     const [message, setMessage] = useState("");
+    const [userRole, setUserRole] = useState("");
     const navigate = useNavigate();
+
+
+    const fetchUserRole = async () => {
+        try {
+            const response = await fetch("http://localhost:4000/get-user-role", {
+                method: "GET",
+                credentials: "include", // Include cookies to maintain session
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setUserRole(data.role); // Assuming the API returns an object with a 'role' key
+            } else {
+                console.error("Failed to fetch user role");
+            }
+        } catch (error) {
+            console.error("Error fetching user role:", error);
+        }
+    };
+    
+    useEffect(() => {
+        fetchUserRole(); // Fetch user role when the component mounts
+    }, []);
+
 
     const handleTransfer = async () => {
         if (!fromEmail || !toEmail || !transferAmount) {
@@ -42,6 +67,17 @@ export default function TransferBetweenCustomers() {
             setMessage("An error occurred while processing the transfer.");
         }
     };
+
+    const handleBackToDashboard = () => {
+        if (userRole === "admin") {
+            navigate("/adminHome");
+        } else if (userRole === "employee") {
+            navigate("/employee");
+        } else {
+            setMessage("User role is not recognized.");
+        }
+    };
+
 
     return (
         <div className="transfer-container">
@@ -101,7 +137,7 @@ export default function TransferBetweenCustomers() {
 
                 <div className="transfer-button-group">
                     <button type="button" onClick={handleTransfer}>Transfer</button>
-                    <button type="button" onClick={() => navigate("/employee")}>Back to Dashboard</button>
+                    <button type="button" onClick={handleBackToDashboard}>Back to Dashboard</button>
                 </div>
 
                 {message && <p className="transfer-message">{message}</p>}

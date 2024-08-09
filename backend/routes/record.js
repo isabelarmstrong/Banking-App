@@ -93,7 +93,7 @@ recordRoutes.route("/userAccounts/:email").get(async (req, res) => {
         let db_connect = dbo.getDb();
         let email = req.params.email;
 
-        const result = await db_connect.collection("userAccounts").find({email: email}).project({_id: 0, password: 0, role: 0}).toArray();
+        const result = await db_connect.collection("userAccounts").find({email: email}).project({_id: 0, password: 0}).toArray();
         console.log(result);
         res.json(result);
     } catch(err){
@@ -1061,9 +1061,28 @@ recordRoutes.route("/transfer-to-another-account").put(async (req, res) => {
     }
 });
 
+recordRoutes.route("/get-user-role").get((req, res) => {
+    try {
+        console.log("In get-user-role route...");
+
+        // Log the entire session object to see what's stored
+        console.log("Session Data:", req.session);
+
+        // Check and log the role directly from the session
+        if (req.session && req.session.role) {
+            console.log("User Role:", req.session.role);
+            res.json({ role: req.session.role });
+        } else {
+            console.log("User role not found in session");
+            res.status(401).json({ message: "User role not found in session" });
+        }
+    } catch (err) {
+        console.error("Error retrieving user role:", err);
+        res.status(500).json({ message: "Internal server error" });
+    }
+});
 
 
- 
 
- 
+
 module.exports = recordRoutes;
